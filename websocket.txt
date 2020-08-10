@@ -1,0 +1,77 @@
+        void websocket_Opened(object sender, EventArgs e)
+        {
+            logF.writeLog_toFile("webConnect", "websocket_Opened", "success", "—оединение с сервером по технологии websocket установлено"); //запись лога
+            this.isConnected = true;
+        }
+
+        void websocket_Error(object sender, SuperSocket.ClientEngine.ErrorEventArgs e)
+        {
+            logF.writeLog_toFile("webConnect", "websocket_Error", "error", " ¬о врем€ работы с сервером по технологии websocket произошел обрыв по причине: " + e.Exception.Message); 
+
+            if (this.webSocket.State != WebSocketState.Open)
+            {
+                this.isConnected = false;
+            }
+
+            if (!this.isConnected)
+            {
+                logF.writeLog_toFile("websocket_Error", "Reconnecting", "success", "ѕерезапуск соединени€ websocket"); //запись лога
+                webConnect();
+            }
+        }
+
+        void websocket_Closed(object sender, EventArgs e)
+        {
+            logF.writeLog_toFile("webConnect", "websocket_Closed", "success", "  анал websocket закрылс€!"); //запись лога
+            this.isConnected = false;
+            webConnect();
+        }
+
+        public void webConnect()//соединение с сервером по WebSocket
+        {
+            #region —оединение с сервером по WebSocket
+
+            if (countRetry_Connection > 0)
+            {
+                try
+                {
+                    if (_url == string.Empty)
+                    {
+                        _url = ""; //строка запроса
+                    }
+
+                    if (webSocket == null)
+                    {
+                        logF.writeLog_toFile("webConnect", "Creating websocket", "success", "—оздание websocket"); //запись лога
+                        webSocket = new WebSocket(_url);
+                        webSocket.Opened += new EventHandler(websocket_Opened);
+                        webSocket.Closed += new EventHandler(websocket_Closed);
+                        webSocket.Error += new EventHandler<SuperSocket.ClientEngine.ErrorEventArgs>(websocket_Error);
+                        webSocket.MessageReceived += new EventHandler<MessageReceivedEventArgs>(websocket_MessageReceived);
+                    }
+
+
+                    logF.writeLog_toFile("webConnect", "webSocket.State before", "success", "webSocket.State: " + webSocket.State.ToString()); //запись лога
+
+                    if (!isConnected && webSocket.State != WebSocketState.Open)
+                    {
+                        webSocket.Open();
+
+                        if (webSocket.State == WebSocketState.Open)
+                        {
+                            update_num();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logF.writeLog_toFile("webConnect", "Error connect websocket", "error", "—оединение с сервером по технологии websocket установить не удалось: " + ex.ToString()); //запись лога                                                                                                                                                                             
+                }
+            }
+            else
+            {
+                MessageBox.Show("ѕроверьте интернет соединение!");
+            }
+
+            #endregion
+        }
